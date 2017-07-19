@@ -8,7 +8,16 @@
 		"workoutlog.define",
 		"workoutlog.logs",
 		"workoutlog.history"
-	]);
+	])
+	.factory('socket', function(socketFactory) {
+		var myIoSocket = io.connect('http://localhost:3000');
+
+		var socket = socketFactory({
+			ioSocket: myIoSocket
+		});
+
+		return socket;
+	});
 
 
 	function config($urlRouterProvider) {
@@ -17,144 +26,12 @@
 
 	config.$inject = ["$urlRouterProvider"];
 	app.config(config);
-	app.constant("API_BASE", "//localhost:3000/api/");
+
+	var API_BASE = location.hostname === "localhost" ? "//localhost:3000/api/" : "//workoutlog-angular-server.herokuapp.com/api/"
+	app.constant("API_BASE", API_BASE);
 
 
 })();
-(function(){
-
-
-angular.module("workoutlog.auth.signin",["ui.router"])
-	.config(signinConfig);
-
-
-
-
-function signinConfig($stateProvider) {
-	$stateProvider
-		.state("signin", {
-			url: "/signin",
-			templateUrl: "/components/auth/signin.html",
-			controller: SignInController,
-			controllerAs: "ctrl",
-			bindToController: this
-		});
-}
-
-signinConfig.$inject = ["$stateProvider"];
-
-
-
-
-
-function SignInController($state, UsersService) {
-	var vm = this;
-	vm.user = {};
-	vm.login = function() {
-		UsersService.login(vm.user).then(function(response){
-			console.log(response);
-			$state.go("define");
-		});
-	};
-}
-
-SignInController.$inject = ["$state", "UsersService"];
-
-
-
-})();//end of wrapper IIFE
-(function(){
-
-
-angular.module("workoutlog.auth.signup", ["ui.router"])
-	.config(signupConfig);
-
-
-
-function signupConfig($stateProvider) {
-	$stateProvider
-		.state("signup",{
-			url: "/signup",
-			templateUrl: "/components/auth/signup.html",
-			controller: SignUpController,
-			controllerAs: "ctrl",
-			bindToController: this
-		});
-}
-
-signupConfig.$inject = ["$stateProvider"];
-
-
-
-
-function SignUpController($state, UsersService) {
-	var vm = this;
-	vm.user = {};
-	vm.submit = function() {
-		UsersService.create(vm.user).then(function(response){
-			console.log("Response in signup.js from the SignUpController, where we UsersService.create: " + response);
-			$state.go("define");
-		});
-	};
-}
-
-SignUpController.$inject = ["$state", "UsersService"];
-
-
-
-
-
-})();//end of wrapper IIFE
-
-(function() {
-
-
-angular.module("workoutlog")
-	.directive("userlinks", function() {
-
-		UserLinksController.$inject = ["$state", "CurrentUser", "SessionToken"];
-
-		function UserLinksController($state, CurrentUser, SessionToken) {
-			var vm = this;
-			
-			vm.user = function() {
-				return CurrentUser.get();
-			};
-
-			vm.signedIn = function() {
-				return !!(vm.user().id);
-			};
-
-			vm.logout = function() {
-				CurrentUser.clear();
-				SessionToken.clear();
-				$state.go("signin");
-			};
-		};
-
-
-		return {
-			scope: {},
-			controller: UserLinksController,
-			controllerAs: "ctrl",
-			bindToController: true,
-			templateUrl: "/components/auth/userlinks.html"
-		};
-
-
-	});//end of directive
-
-
-
-
-})();//end of wrapper IIFE
-
-
-//Notice the return at the bottom of the application.  This is where the directive is configured.  
-//It is similar to the configuration of the other components.  One item to note is the scope: {}; creates an isolated scope.  
-//This isolates the data to that portion of the application.
-
-
 (function() {
 
 
@@ -354,6 +231,140 @@ function LogsController($state, DefineService, LogsService) {
 
 
 })();//end of wrapper IIFE
+(function(){
+
+
+angular.module("workoutlog.auth.signin",["ui.router"])
+	.config(signinConfig);
+
+
+
+
+function signinConfig($stateProvider) {
+	$stateProvider
+		.state("signin", {
+			url: "/signin",
+			templateUrl: "/components/auth/signin.html",
+			controller: SignInController,
+			controllerAs: "ctrl",
+			bindToController: this
+		});
+}
+
+signinConfig.$inject = ["$stateProvider"];
+
+
+
+
+
+function SignInController($state, UsersService) {
+	var vm = this;
+	vm.user = {};
+	vm.login = function() {
+		UsersService.login(vm.user).then(function(response){
+			console.log(response);
+			$state.go("define");
+		});
+	};
+}
+
+SignInController.$inject = ["$state", "UsersService"];
+
+
+
+})();//end of wrapper IIFE
+(function(){
+
+
+angular.module("workoutlog.auth.signup", ["ui.router"])
+	.config(signupConfig);
+
+
+
+function signupConfig($stateProvider) {
+	$stateProvider
+		.state("signup",{
+			url: "/signup",
+			templateUrl: "/components/auth/signup.html",
+			controller: SignUpController,
+			controllerAs: "ctrl",
+			bindToController: this
+		});
+}
+
+signupConfig.$inject = ["$stateProvider"];
+
+
+
+
+function SignUpController($state, UsersService) {
+	var vm = this;
+	vm.user = {};
+	vm.submit = function() {
+		UsersService.create(vm.user).then(function(response){
+			console.log("Response in signup.js from the SignUpController, where we UsersService.create: " + response);
+			$state.go("define");
+		});
+	};
+}
+
+SignUpController.$inject = ["$state", "UsersService"];
+
+
+
+
+
+})();//end of wrapper IIFE
+
+(function() {
+
+
+angular.module("workoutlog")
+	.directive("userlinks", function() {
+
+		UserLinksController.$inject = ["$state", "CurrentUser", "SessionToken"];
+
+		function UserLinksController($state, CurrentUser, SessionToken) {
+			var vm = this;
+			
+			vm.user = function() {
+				return CurrentUser.get();
+			};
+
+			vm.signedIn = function() {
+				return !!(vm.user().id);
+			};
+
+			vm.logout = function() {
+				CurrentUser.clear();
+				SessionToken.clear();
+				$state.go("signin");
+			};
+		};
+
+
+		return {
+			scope: {},
+			controller: UserLinksController,
+			controllerAs: "ctrl",
+			bindToController: true,
+			templateUrl: "/components/auth/userlinks.html"
+		};
+
+
+	});//end of directive
+
+
+
+
+})();//end of wrapper IIFE
+
+
+//Notice the return at the bottom of the application.  This is where the directive is configured.  
+//It is similar to the configuration of the other components.  One item to note is the scope: {}; creates an isolated scope.  
+//This isolates the data to that portion of the application.
+
+
 
 (function(){
 
